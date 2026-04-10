@@ -66,7 +66,8 @@ docker compose up
 ```
 
 > The server runs on `http://localhost:3000`.  
-> The Bull Board dashboard is at `http://localhost:3000/admin/queues`.
+> You can easily make API requests using the built-in HTML client at `http://localhost:3000/public/index.html`.
+> Once you've created jobs, you can visually inspect them using the Bull Board dashboard at `http://localhost:3000/admin/queues` (which is set to read-only so all jobs realistically flow through the API).
 
 ---
 

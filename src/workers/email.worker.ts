@@ -12,7 +12,7 @@ export default async function (job: Job) {
 
   const shouldFail = Math.random() < 0.4;
 
-  await new Promise((resolve) => setTimeout(resolve, 800));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 
   if (shouldFail) {
     throw new Error(

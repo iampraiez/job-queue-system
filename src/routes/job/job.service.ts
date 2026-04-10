@@ -19,13 +19,7 @@ export class JobService {
       },
     });
 
-    const queueMap: Record<string, Queue> = {
-      EMAIL: this.queues.email,
-      IMAGE_PROCESSING: this.queues.imageProcessing,
-      REPORT_GENERATION: this.queues.reportGeneration,
-      SCRAPING: this.queues.scraping,
-    };
-    const targetQueue = queueMap[jobData.queueName];
+    const targetQueue = this.getQueue(jobData.queueName);
 
     await targetQueue.add(
       jobData.queueName,
@@ -34,6 +28,7 @@ export class JobService {
         ...jobData.data,
       },
       {
+        jobId: jobRecord.id,
         attempts: jobRecord.maxAttempts,
         delay: jobRecord.delayUntil
           ? Math.max(0, new Date(jobRecord.delayUntil).getTime() - Date.now())
@@ -51,5 +46,39 @@ export class JobService {
         userId,
       },
     });
+  }
+
+  async deleteJob(id: string, userId: string) {
+    const job = await this.prisma.job.findUnique({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    if (!job) {
+      throw new Error("Job not found");
+    }
+
+    if (job.status === "COMPLETED") {
+      throw new Error("Job already completed");
+    }
+
+    const targetQueue = this.getQueue(job.queueName);
+    await targetQueue.remove(id);
+
+    return await this.prisma.job.delete({
+      where: { id },
+    });
+  }
+
+  private getQueue(queueName: string): Queue {
+    const queueMap: Record<string, Queue> = {
+      EMAIL: this.queues.email,
+      IMAGE_PROCESSING: this.queues.imageProcessing,
+      REPORT_GENERATION: this.queues.reportGeneration,
+      SCRAPING: this.queues.scraping,
+    };
+    return queueMap[queueName];
   }
 }

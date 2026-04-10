@@ -24,31 +24,40 @@ const bullMqPlugin: FastifyPluginAsync = fp(async (fastify) => {
 
   const handleCompleted = async (job: Job, returnvalue: unknown) => {
     fastify.log.info(`[${job.name}] Job ${job.id} completed.`);
-    await fastify.prisma.job.update({
-      where: { id: job.id },
-      data: {
-        status: "COMPLETED",
-        result: returnvalue as object,
-        attempts: job.attemptsMade,
-      },
-    });
+    try {
+      await fastify.prisma.job.update({
+        where: { id: job.id },
+        data: {
+          status: "COMPLETED",
+          result: returnvalue as object,
+          attempts: job.attemptsMade,
+        },
+      });
+    } catch (dbErr) {
+      fastify.log.warn(`[Worker] Could not update status for completed job ${job.id}: record no longer exists.`);
+    }
   };
 
   const handleFailed = async (job: Job | undefined, err: Error) => {
     fastify.log.error(`[Worker] Job ${job?.id} failed: ${err.message}`);
     const isFinalFailure = job && job.attemptsMade >= (job.opts.attempts ?? 1);
     if (job?.id) {
-      await fastify.prisma.job.update({
-        where: { id: job.id },
-        data: {
-          attempts: job.attemptsMade,
-          ...(isFinalFailure && {
-            status: "FAILED",
-            result: `Final failure after ${job.attemptsMade} attempts: ${err.message}`,
-            error: err.stack,
-          }),
-        },
-      });
+      try {
+        await fastify.prisma.job.update({
+          where: { id: job.id },
+          data: {
+            attempts: job.attemptsMade,
+            ...(isFinalFailure && {
+              status: "FAILED",
+              result: `Final failure after ${job.attemptsMade} attempts: ${err.message}`,
+              error: err.stack,
+            }),
+          },
+        });
+      } catch (dbErr) {
+        // Job was deleted before this retry completed — nothing to update
+        fastify.log.warn(`[Worker] Could not update status for job ${job.id}: record no longer exists.`);
+      }
     }
   };
 

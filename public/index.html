@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job Queue API Client</title>
+    <style>
+      body {
+        background-color: #f9fafb;
+        color: #111827;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+          sans-serif;
+        margin: 0;
+        padding: 20px;
+        line-height: 1.3;
+        font-size: 0.9rem;
+      }
+      .container {
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 20px;
+        align-items: stretch;
+      }
+      .card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+      h2 {
+        margin-top: 0;
+        font-size: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+      }
+      label {
+        display: block;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #374151;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 4px 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        box-sizing: border-box;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: #6366f1;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .row > div {
+        flex: 1;
+      }
+      .mb-3 {
+        margin-bottom: 8px;
+      }
+
+      button {
+        background-color: #f3f4f6;
+        border: 1px solid #d1d5db;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #374151;
+      }
+      button:hover {
+        background-color: #e5e7eb;
+      }
+      button.primary {
+        background-color: #000;
+        color: white;
+        border-color: #000;
+      }
+      button.primary:hover {
+        background-color: #333;
+      }
+
+      pre {
+        background-color: #f3f4f6;
+        padding: 10px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        overflow: auto;
+        border: 1px solid #e5e7eb;
+        margin: 0;
+        max-height: 600px;
+        word-break: break-all;
+        white-space: pre-wrap;
+      }
+      .badge {
+        font-size: 0.75rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        background: #e5e7eb;
+      }
+      .badge.success {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .badge.error {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="max-width: 1000px; margin: auto">
+      <!-- Left Column -->
+      <div style="display: flex; flex-direction: column; gap: 20px">
+        <!-- User Setup -->
+        <div class="card">
+          <h2>1. Setup User</h2>
+          <form id="createUserForm" class="row">
+            <div>
+              <label>Name</label>
+              <input type="text" id="userName" value="satoru" required />
+            </div>
+            <div>
+              <label>Email</label>
+              <input
+                type="email"
+                id="userEmail"
+                value="satoru@email.com"
+                required
+              />
+            </div>
+            <div style="display: flex; align-items: flex-end">
+              <button type="submit" class="primary" style="width: 100%">
+                Create User
+              </button>
+            </div>
+          </form>
+          <div class="row" style="margin-top: 10px; margin-bottom: 0">
+            <div style="flex: 2">
+              <label>Active User ID (Used below)</label>
+              <input
+                type="text"
+                id="activeUserId"
+                placeholder="Create a user first..."
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Create Job -->
+        <div class="card">
+          <h2>2. Create Job</h2>
+          <form id="createJobForm">
+            <div class="row">
+              <div>
+                <label>Queue Name *</label>
+                <select id="queueName" required onchange="updateFormFields()">
+                  <option value="EMAIL">EMAIL</option>
+                  <option value="IMAGE_PROCESSING">IMAGE PROCESSING</option>
+                  <option value="REPORT_GENERATION">REPORT GENERATION</option>
+                  <option value="SCRAPING">SCRAPING</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label>Max Attempts (Optional)</label>
+                <input type="number" id="maxAttempts" placeholder="3" />
+              </div>
+              <div>
+                <label>Delay Until (Optional)</label>
+                <input type="datetime-local" id="delayUntil" />
+              </div>
+            </div>
+
+            <div
+              id="dynamicFields"
+              style="
+                margin: 15px 0;
+                padding: 15px 0;
+                border-top: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5e7eb;
+              "
+            >
+              <!-- Dynamic fields go here -->
+            </div>
+
+            <button type="submit" class="primary" style="width: 100%">
+              Create Job
+            </button>
+          </form>
+        </div>
+
+        <!-- Manage Job -->
+        <div class="card">
+          <h2>3. Manage Job</h2>
+          <div class="row">
+            <div style="flex: 2">
+              <label>Job ID</label>
+              <input
+                type="text"
+                id="manageJobId"
+                placeholder="Job ID from response..."
+              />
+            </div>
+            <div style="flex: 2">
+              <label>User ID</label>
+              <input
+                type="text"
+                id="manageUserId"
+                placeholder="Target User ID"
+              />
+            </div>
+          </div>
+          <div class="row" style="margin-bottom: 0">
+            <button onclick="getJob()" style="flex: 1">
+              Check Status (GET)
+            </button>
+            <button onclick="deleteJob()" style="flex: 1">
+              Delete Job (DELETE)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div
+        class="card"
+        style="position: sticky; top: 20px; align-self: start; min-width: 0;"
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 10px;
+          "
+        >
+          <h2 style="margin: 0; border: none; padding: 0">API Response</h2>
+          <span id="statusCode" class="badge">Ready</span>
+        </div>
+        <pre id="responseOutput">
+Make a request to see the response here...</pre
+        >
+      </div>
+    </div>
+
+    <script>
+      const baseUrl = "http://localhost:3000";
+
+      const fieldsSchema = {
+        EMAIL: `
+          <div class="mb-3"><label>To Email *</label><input type="email" id="email_to" value="recipient@example.com" required></div>
+          <div class="mb-3"><label>Subject *</label><input type="text" id="email_sub" value="Test Subject" required></div>
+          <div class="mb-3"><label>Body *</label><textarea id="email_body" rows="2" required>Hello from the queue!</textarea></div>
+          <div class="row mb-3">
+            <div><label>From (Optional)</label><input type="email" id="email_from" placeholder="sender@example.com"></div>
+            <div><label>Template ID (Optional)</label><input type="text" id="email_template" placeholder="tmpl_abc123"></div>
+          </div>
+        `,
+        IMAGE_PROCESSING: `
+          <div class="mb-3"><label>Image URL (Optional)</label><input type="url" id="img_url" value="https://example.com/photo.jpg"></div>
+          <div class="row mb-3">
+            <div><label>Output Format (Optional)</label><select id="img_format"><option value="">— none —</option><option value="jpeg">jpeg</option><option value="png">png</option><option value="webp">webp</option></select></div>
+            <div><label>Quality 1–100 (Optional)</label><input type="number" id="img_qual" placeholder="80" min="1" max="100"></div>
+          </div>
+          <div class="mb-3"><label>Operations (Optional) — comma-separated types: resize, crop, compress, convert, watermark</label><input type="text" id="img_ops" placeholder="resize,compress"></div>
+        `,
+        REPORT_GENERATION: `
+          <div class="row mb-3">
+            <div><label>Report Type *</label><select id="rep_type"><option value="daily">daily</option><option value="weekly">weekly</option><option value="monthly">monthly</option><option value="custom">custom</option></select></div>
+            <div><label>Format (Optional)</label><select id="rep_fmt"><option value="">— none —</option><option value="pdf">pdf</option><option value="csv">csv</option><option value="excel">excel</option></select></div>
+          </div>
+          <div class="row mb-3">
+            <div><label>Target User ID *</label><input type="text" id="rep_uid" placeholder="Uses Active User ID if empty"></div>
+            <div><label>Email Results To (Optional)</label><input type="email" id="rep_email" placeholder="results@example.com"></div>
+          </div>
+        `,
+        SCRAPING: `
+          <div class="mb-3"><label>Target URL *</label><input type="url" id="scr_url" value="https://news.ycombinator.com" required></div>
+          <div class="row mb-3">
+            <div style="flex: 2;"><label>CSS Selectors (comma-separated, Optional)</label><input type="text" id="scr_sel" value=".titleline > a"></div>
+            <div><label>Max Pages (Optional)</label><input type="number" id="scr_pages" value="2"></div>
+          </div>
+          <div class="mb-3"><label>Custom Headers (Optional) — JSON format e.g. {"Authorization":"Bearer token"}</label><input type="text" id="scr_headers" placeholder='{"User-Agent":"MyBot/1.0"}'></div>
+        `,
+      };
+
+      function updateFormFields() {
+        const type = document.getElementById("queueName").value;
+        document.getElementById("dynamicFields").innerHTML = fieldsSchema[type];
+      }
+
+      function showResponse(res, data) {
+        const codeSpan = document.getElementById("statusCode");
+        codeSpan.textContent = `HTTP ${res.status}`;
+        codeSpan.className = `badge ${res.ok ? "success" : "error"}`;
+        document.getElementById("responseOutput").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+
+        // Auto-fill manage Job ID and User ID when a job is created
+        if (res.ok && data.id && data.userId) {
+          document.getElementById("manageJobId").value = data.id;
+          document.getElementById("manageUserId").value = data.userId;
+        }
+      }
+
+      // 1. Create User
+      document
+        .getElementById("createUserForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const payload = {
+            name: document.getElementById("userName").value,
+            email: document.getElementById("userEmail").value,
+          };
+
+          document.getElementById("responseOutput").textContent =
+            "Creating user...";
+
+          try {
+            const res = await fetch(`${baseUrl}/user`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            showResponse(res, data);
+
+            if (res.ok && data.id) {
+              document.getElementById("activeUserId").value = data.id;
+            }
+          } catch (err) {
+            document.getElementById("responseOutput").textContent =
+              "Error: " + err.message;
+          }
+        });
+
+      // 2. Create Job
+      document
+        .getElementById("createJobForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+          const userId = document.getElementById("activeUserId").value;
+          if (!userId) return alert("Please create/enter a User ID first.");
+
+          const payload = {
+            userId: userId,
+            queueName: document.getElementById("queueName").value,
+          };
+
+          const maxAttempts = document.getElementById("maxAttempts").value;
+          if (maxAttempts) payload.maxAttempts = parseInt(maxAttempts);
+
+          const delayUntil = document.getElementById("delayUntil").value;
+          if (delayUntil)
+            payload.delayUntil = new Date(delayUntil).toISOString();
+
+          payload.data = {};
+          if (payload.queueName === "EMAIL") {
+            const from = document.getElementById("email_from").value;
+            const templateId = document.getElementById("email_template").value;
+            payload.data = {
+              to: document.getElementById("email_to").value,
+              subject: document.getElementById("email_sub").value,
+              body: document.getElementById("email_body").value,
+              ...(from && { from }),
+              ...(templateId && { templateId }),
+            };
+          } else if (payload.queueName === "IMAGE_PROCESSING") {
+            const outputFormat = document.getElementById("img_format").value;
+            const qualityRaw = document.getElementById("img_qual").value;
+            const opsRaw = document.getElementById("img_ops").value;
+            const operations = opsRaw
+              ? opsRaw.split(",").map((s) => ({ type: s.trim() }))
+              : undefined;
+            payload.data = {
+              imageUrl: document.getElementById("img_url").value || undefined,
+              ...(outputFormat && { outputFormat }),
+              ...(qualityRaw && { quality: parseInt(qualityRaw) }),
+              ...(operations && { operations }),
+            };
+          } else if (payload.queueName === "REPORT_GENERATION") {
+            const format = document.getElementById("rep_fmt").value;
+            const emailTo = document.getElementById("rep_email").value;
+            payload.data = {
+              reportType: document.getElementById("rep_type").value,
+              userId: document.getElementById("rep_uid").value || userId,
+              ...(format && { format }),
+              ...(emailTo && { emailTo }),
+            };
+          } else {
+            const selectors = document.getElementById("scr_sel").value.split(",").map((s) => s.trim()).filter(Boolean);
+            const maxPagesRaw = document.getElementById("scr_pages").value;
+            const headersRaw = document.getElementById("scr_headers").value;
+            let headers;
+            if (headersRaw) { try { headers = JSON.parse(headersRaw); } catch(e) { alert("Headers must be valid JSON"); return; } }
+            payload.data = {
+              url: document.getElementById("scr_url").value,
+              ...(selectors.length && { selectors }),
+              ...(maxPagesRaw && { maxPages: parseInt(maxPagesRaw) }),
+              ...(headers && { headers }),
+            };
+          }
+
+          document.getElementById("responseOutput").textContent =
+            "Creating job...";
+
+          try {
+            const res = await fetch(`${baseUrl}/job/create`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+            showResponse(res, data);
+          } catch (err) {
+            document.getElementById("responseOutput").textContent =
+              "Error: " + err.message;
+          }
+        });
+
+      // 3. Manage Jobs
+      async function getJob() {
+        const id = document.getElementById("manageJobId").value;
+        const uid = document.getElementById("manageUserId").value || document.getElementById("activeUserId").value;
+        if (!id || !uid) return alert("Missing Job ID or User ID");
+
+        try {
+          const res = await fetch(`${baseUrl}/job/${id}?userId=${uid}`);
+          const data = await res.json();
+          showResponse(res, data);
+        } catch (err) {
+          document.getElementById("responseOutput").textContent = "Error: " + err.message;
+        }
+      }
+
+      async function deleteJob() {
+        const id = document.getElementById("manageJobId").value;
+        const uid = document.getElementById("manageUserId").value || document.getElementById("activeUserId").value;
+        if (!id || !uid) return alert("Missing Job ID or User ID");
+
+        try {
+          const res = await fetch(`${baseUrl}/job/${id}?userId=${uid}`, {
+            method: "DELETE",
+          });
+          const data = await res.json();
+          showResponse(res, data);
+        } catch (err) {
+          document.getElementById("responseOutput").textContent = "Error: " + err.message;
+        }
+      }
+
+      updateFormFields();
+    </script>
+  </body>
+</html>

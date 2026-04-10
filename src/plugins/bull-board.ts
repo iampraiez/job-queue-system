@@ -9,10 +9,10 @@ const bullBoardPlugin: FastifyPluginAsync = fp(async (fastify) => {
 
   createBullBoard({
     queues: [
-      new BullMQAdapter(fastify.queues.email),
-      new BullMQAdapter(fastify.queues.imageProcessing),
-      new BullMQAdapter(fastify.queues.reportGeneration),
-      new BullMQAdapter(fastify.queues.scraping),
+      new BullMQAdapter(fastify.queues.email, { readOnlyMode: true }),
+      new BullMQAdapter(fastify.queues.imageProcessing, { readOnlyMode: true }),
+      new BullMQAdapter(fastify.queues.reportGeneration, { readOnlyMode: true }),
+      new BullMQAdapter(fastify.queues.scraping, { readOnlyMode: true }),
     ],
     serverAdapter,
   });

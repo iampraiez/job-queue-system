@@ -13,7 +13,7 @@ export default async function (job: Job) {
 
   const reportUrl = "http://localhost:3000/public/report-template.pdf";
 
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+  await new Promise((resolve) => setTimeout(resolve, 20000));
 
   if (Math.random() < 0.35) {
     throw new Error(

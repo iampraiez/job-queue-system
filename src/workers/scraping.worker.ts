@@ -12,7 +12,7 @@ export default async function (job: Job) {
   console.log(`[Scraping Worker] Headers: ${JSON.stringify(headers ?? {})}`);
 
   const pages = maxPages ?? 1;
-  await new Promise((resolve) => setTimeout(resolve, 1500 * pages));
+  await new Promise((resolve) => setTimeout(resolve, 4000 * pages));
 
   if (Math.random() < 0.3) {
     throw new Error(`Target site ${url} returned 429 Too Many Requests.`);

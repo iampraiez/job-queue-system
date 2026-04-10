@@ -38,9 +38,14 @@ export const userController: FastifyPluginAsync = async (
     async function (request: FastifyRequest, reply: FastifyReply) {
       try {
         const user_data = await userRequestBodySchema.parseAsync(request.body);
-        const user_response = await fastify.prisma.user.create({
-          data: user_data,
+        let user_response = await fastify.prisma.user.findUnique({
+          where: { email: user_data.email },
         });
+        if (!user_response) {
+          user_response = await fastify.prisma.user.create({
+            data: user_data,
+          });
+        }
         reply.status(201).send(user_response);
       } catch (error: unknown) {
         console.error("Error parsing request body:", error);

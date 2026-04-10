@@ -12,7 +12,7 @@ export default async function (job: Job) {
 
   const outputUrl = "http://localhost:3000/public/image.jpg";
 
-  await new Promise((resolve) => setTimeout(resolve, 4000));
+  await new Promise((resolve) => setTimeout(resolve, 15000));
 
   if (Math.random() < 0.3) {
     throw new Error("Image processing service temporarily unavailable.");
