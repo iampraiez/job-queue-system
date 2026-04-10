@@ -1,7 +1,12 @@
 import * as z from "zod";
 
-type JobType = "EMAIL" | "IMAGE_PROCESSING" | "REPORT_GENERATION" | "SCRAPING";
-type QueueType = "DEFAULT" | "HIGH_PRIORITY" | "LOW_PRIORITY";
+const QueueTypeEnum = z.enum([
+  "EMAIL",
+  "IMAGE_PROCESSING",
+  "REPORT_GENERATION",
+  "SCRAPING",
+]);
+type QueueType = z.infer<typeof QueueTypeEnum>;
 
 interface EmailJobData {
   to: string;
@@ -37,22 +42,20 @@ interface ScrapingJobData {
 }
 
 export type JobRequestBody = {
-  type: JobType;
   queueName: QueueType;
   maxAttempts?: number;
   delayUntil?: Date;
   userId: string;
 } & (
-  | { type: "EMAIL"; data: EmailJobData }
-  | { type: "IMAGE_PROCESSING"; data: ImageProcessingJobData }
-  | { type: "REPORT_GENERATION"; data: ReportGenerationJobData }
-  | { type: "SCRAPING"; data: ScrapingJobData }
+  | { queueName: "EMAIL"; data: EmailJobData }
+  | { queueName: "IMAGE_PROCESSING"; data: ImageProcessingJobData }
+  | { queueName: "REPORT_GENERATION"; data: ReportGenerationJobData }
+  | { queueName: "SCRAPING"; data: ScrapingJobData }
 );
 
-export const jobRequestBodySchema = z.discriminatedUnion("type", [
+export const jobRequestBodySchema = z.discriminatedUnion("queueName", [
   z.object({
-    type: z.literal("EMAIL"),
-    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
+    queueName: z.literal("EMAIL"),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -66,8 +69,7 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
     }),
   }),
   z.object({
-    type: z.literal("IMAGE_PROCESSING"),
-    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
+    queueName: z.literal("IMAGE_PROCESSING"),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -89,12 +91,10 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
         .optional(),
       outputFormat: z.enum(["jpeg", "png", "webp"] as const).optional(),
       quality: z.number().min(1).max(100).optional(),
-      userId: z.string().optional(),
     }),
   }),
   z.object({
-    type: z.literal("REPORT_GENERATION"),
-    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
+    queueName: z.literal("REPORT_GENERATION"),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -107,8 +107,7 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
     }),
   }),
   z.object({
-    type: z.literal("SCRAPING"),
-    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
+    queueName: z.literal("SCRAPING"),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -117,7 +116,6 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
       selectors: z.array(z.string()).optional(),
       maxPages: z.number().int().positive().optional(),
       headers: z.record(z.string(), z.string()).optional(),
-      userId: z.string().optional(),
     }),
   }),
 ]);

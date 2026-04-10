@@ -6,7 +6,7 @@ export const jobController: FastifyPluginAsync = async (
   fastify,
   opts?: unknown,
 ): Promise<void> => {
-  const jobService = new JobService(fastify.prisma, fastify.queues.default);
+  const jobService = new JobService(fastify.prisma, fastify.queues as any);
 
   fastify.post(
     "/job/create",

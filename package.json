@@ -1,7 +1,7 @@
 {
   "name": "job-queue-system",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
+  "description": "An enterprise-grade, feature-based job queue system built with Fastify, BullMQ, and Prisma.",
   "type": "module",
   "main": "app.ts",
   "directories": {
@@ -19,8 +19,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@bull-board/api": "^6.21.0",
+    "@bull-board/fastify": "^6.21.0",
     "@fastify/autoload": "^6.0.0",
     "@fastify/sensible": "^6.0.0",
+    "@fastify/static": "^9.1.0",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.7.0",
     "@prisma/client-runtime-utils": "^7.7.0",

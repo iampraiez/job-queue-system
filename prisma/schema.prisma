@@ -26,12 +26,14 @@ model Job {
   id          String   @id @default(cuid()) @unique()
   userId      String?
   user        User?    @relation(fields: [userId], references: [id])
-  type        JobType
+  // the job type field is not added since queues are respective to job types
+  // say the queues are created wrt priority like default, high / low processing
+  // then there might be a need for job types
   data        Json
   status      JobStatus @default(PENDING)
   delayUntil  DateTime?
   bullJobId   String?
-  queueName   QueueType @default(DEFAULT)
+  queueName   QueueType
 
   attempts    Int       @default(0)
   maxAttempts Int       @default(5)
@@ -42,15 +44,8 @@ model Job {
   error       String?
 
   @@index([status])
-  @@index([type])
+  @@index([queueName])
   @@index([userId])
-}
-
-enum JobType {
-  EMAIL
-  IMAGE_PROCESSING
-  REPORT_GENERATION
-  SCRAPING
 }
 
 enum JobStatus {
@@ -62,7 +57,8 @@ enum JobStatus {
 }
 
 enum QueueType {
-  DEFAULT
-  HIGH_PRIORITY
-  LOW_PRIORITY
+  EMAIL
+  IMAGE_PROCESSING
+  REPORT_GENERATION
+  SCRAPING
 }

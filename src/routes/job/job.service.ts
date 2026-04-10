@@ -5,13 +5,12 @@ import { JobRequestBody } from "./jobs.parser.js";
 export class JobService {
   constructor(
     private readonly prisma: PrismaClient,
-    private readonly queue: Queue,
+    private readonly queues: Record<string, Queue>,
   ) {}
 
   async createJob(jobData: JobRequestBody) {
     const jobRecord = await this.prisma.job.create({
       data: {
-        type: jobData.type,
         data: jobData.data as object,
         queueName: jobData.queueName,
         maxAttempts: jobData.maxAttempts,
@@ -20,8 +19,16 @@ export class JobService {
       },
     });
 
-    await this.queue.add(
-      jobData.type,
+    const queueMap: Record<string, Queue> = {
+      EMAIL: this.queues.email,
+      IMAGE_PROCESSING: this.queues.imageProcessing,
+      REPORT_GENERATION: this.queues.reportGeneration,
+      SCRAPING: this.queues.scraping,
+    };
+    const targetQueue = queueMap[jobData.queueName];
+
+    await targetQueue.add(
+      jobData.queueName,
       {
         jobId: jobRecord.id,
         ...jobData.data,
