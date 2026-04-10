@@ -1,7 +1,8 @@
 import fp from "fastify-plugin";
 import { FastifyPluginAsync } from "fastify";
-import { Queue, Worker, Job } from "bullmq";
+import { Queue, Worker } from "bullmq";
 import Redis from "ioredis";
+import { fileURLToPath } from "node:url";
 import "dotenv/config";
 
 declare module "fastify" {
@@ -24,23 +25,36 @@ const bullMqPlugin: FastifyPluginAsync = fp(async (fastify, opts) => {
   });
   fastify.log.info("BullMQ Default Queue initialized.");
 
-  const defaultWorker = new Worker(
-    "default",
-    async (job: Job) => {
-      fastify.log.info(
-        `[Worker] Started processing job ${job.id} of type ${job.name}`,
-      );
-
-      return { processedAt: new Date() };
-    },
-    { connection: redisConnection },
+  const defaultWorkerPath = fileURLToPath(
+    new URL("../workers/default.worker.js", import.meta.url),
   );
 
-  defaultWorker.on("completed", (job, returnvalue) => {
+  const defaultWorker = new Worker("default", defaultWorkerPath, {
+    connection: redisConnection,
+  });
+
+  defaultWorker.on("completed", async (job, returnvalue) => {
+    console.log("Completed Job", job);
+    await fastify.prisma.job.update({
+      where: { id: job.id },
+      data: {
+        status: "COMPLETED",
+        result: returnvalue,
+      },
+    });
     fastify.log.info(`[Worker] Job ${job.id} completed successfully!`);
   });
 
-  defaultWorker.on("failed", (job, err) => {
+  defaultWorker.on("failed", async (job, err) => {
+    // if (job.)
+    await fastify.prisma.job.update({
+      where: { id: job?.id!! },
+      data: {
+        status: "FAILED",
+        result: err.message,
+        error: err.stack,
+      },
+    });
     fastify.log.error(
       `[Worker] Job ${job?.id} failed with error: ${err.message}`,
     );

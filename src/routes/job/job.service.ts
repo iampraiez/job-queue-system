@@ -27,9 +27,9 @@ export class JobService {
         ...jobData.data,
       },
       {
-        attempts: jobData.maxAttempts,
-        delay: jobData.delayUntil
-          ? new Date(jobData.delayUntil).getTime() - Date.now()
+        attempts: jobRecord.maxAttempts,
+        delay: jobRecord.delayUntil
+          ? Math.max(0, new Date(jobRecord.delayUntil).getTime() - Date.now())
           : 0,
       },
     );

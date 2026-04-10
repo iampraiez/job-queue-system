@@ -1,6 +1,7 @@
 import * as z from "zod";
 
 type JobType = "EMAIL" | "IMAGE_PROCESSING" | "REPORT_GENERATION" | "SCRAPING";
+type QueueType = "DEFAULT" | "HIGH_PRIORITY" | "LOW_PRIORITY";
 
 interface EmailJobData {
   to: string;
@@ -19,12 +20,10 @@ interface ImageProcessingJobData {
   }>;
   outputFormat?: "jpeg" | "png" | "webp";
   quality?: number;
-  userId?: string;
 }
 
 interface ReportGenerationJobData {
   reportType: "daily" | "weekly" | "monthly" | "custom";
-  userId: string;
   filters?: Record<string, any>;
   format?: "pdf" | "csv" | "excel";
   emailTo?: string;
@@ -35,12 +34,11 @@ interface ScrapingJobData {
   selectors?: string[]; // CSS selectors to extract
   maxPages?: number;
   headers?: Record<string, string>;
-  userId?: string;
 }
 
 export type JobRequestBody = {
   type: JobType;
-  queueName: string;
+  queueName: QueueType;
   maxAttempts?: number;
   delayUntil?: Date;
   userId: string;
@@ -54,7 +52,7 @@ export type JobRequestBody = {
 export const jobRequestBodySchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("EMAIL"),
-    queueName: z.string(),
+    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -69,7 +67,7 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("IMAGE_PROCESSING"),
-    queueName: z.string(),
+    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -96,7 +94,7 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("REPORT_GENERATION"),
-    queueName: z.string(),
+    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),
@@ -110,7 +108,7 @@ export const jobRequestBodySchema = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("SCRAPING"),
-    queueName: z.string(),
+    queueName: z.enum(["DEFAULT", "HIGH_PRIORITY", "LOW_PRIORITY"]),
     maxAttempts: z.number().int().positive().optional(),
     delayUntil: z.date().optional(),
     userId: z.string(),

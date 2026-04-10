@@ -23,7 +23,7 @@ model User {
 }
 
 model Job {
-  id          String   @id @default(cuid())
+  id          String   @id @default(cuid()) @unique()
   userId      String?
   user        User?    @relation(fields: [userId], references: [id])
   type        JobType
@@ -31,13 +31,12 @@ model Job {
   status      JobStatus @default(PENDING)
   delayUntil  DateTime?
   bullJobId   String?
-  queueName   QueueType
+  queueName   QueueType @default(DEFAULT)
 
   attempts    Int       @default(0)
   maxAttempts Int       @default(5)
 
   createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 
   result      Json?
   error       String?
